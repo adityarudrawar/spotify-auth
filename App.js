@@ -1,21 +1,130 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+// Room No: 267 for Prof.
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import { View, StyleSheet, KeyboardAvoidingView, Text } from "react-native";
+import { Button, Image } from "react-native-elements";
+import { useEffect, useState } from "react";
+import { redirectUri, makeRedirectUri, ResponseType, useAuthRequest } from "expo-auth-session";
+import * as WebBrowser from 'expo-web-browser';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+WebBrowser.maybeCompleteAuthSession();
+
+
+const discovery = {
+  authorizationEndpoint:
+  "https://accounts.spotify.com/authorize",
+  tokenEndpoint: 
+  "https://accounts.spotify.com/api/token",
+};
+
+
+const LoginScreen = ({ navigation }) => {
+  // const dispatch = useDispatch();
+  let redirectUri = makeRedirectUri({ useProxy: true })
+  const [token, setToken] = useState("");
+  const [request, response, promptAsync] = 
+  useAuthRequest(
+    {
+      responseType: ResponseType.Token,
+      clientId: "34e03decb4924b22b7b992c93f34d62d",
+      scopes: [
+        "user-read-currently-playing",
+        "user-read-recently-played",
+        "user-read-playback-state",
+        "user-top-read",
+        "user-modify-playback-state",
+        "streaming",
+        "user-read-email",
+        "user-read-private",
+        "playlist-modify-private",
+        "playlist-read-private",
+        "playlist-modify-public",
+        "user-library-modify",
+        "user-library-read"
+      ],
+      // In order to follow the "Authorization Code Flow" 
+      // to fetch token after authorizationEndpoint
+      // this must be set to false
+      usePKCE: false,
+      redirectUri:  "www.google.com"
+    },
+    discovery
   );
-}
-
+  
+  
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { access_token } = response.params;
+      console.log(access_token)
+      setToken(access_token);
+    }
+  }, [response]);
+  
+  
+  // useEffect(() => {
+  //   if (token) {
+  //     axios(
+  //       "https://api.spotify.com/v1/me/top/tracks?time_range=short_term", {
+  //       method: "GET",
+  //       headers: {
+  //         Accept: "application/json",
+  //         "Content-Type": "application/json",
+  //         Authorization: "Bearer " + token,
+  //       },
+  //     })
+  //       .then((response) => {
+  //         console.log(response)
+  //         // dispatch(songAction.addTopSongs(response));
+  //       })
+  //       .catch((error) => {
+  //         console.log("error", error.message);
+  //       });
+  //     setTimeout(
+  //       () =>
+  //         navigation.replace("Home", {
+  //           token: token,
+  //         }),
+  //       500
+  //     );
+  //     // dispatch(tokenAction.addToken(token));
+  //     console.log(token)
+  //   }
+  // });
+  return (
+    <KeyboardAvoidingView behavior="padding" 
+    style={styles.container}>
+      <StatusBar style="light" />
+      <Text
+        style={{
+          fontSize: 30,
+          fontWeight: "bold",
+          color: "white",
+          marginBottom: "20%",
+        }}
+      >
+        top song player
+      </Text>
+      <Button
+        title="Login with Spotify"
+        style={styles.button}
+        onPress={() => {
+          promptAsync();
+        }}
+      />
+      <View style={{ height: 100 }} />
+    </KeyboardAvoidingView>
+  );
+};
+export default LoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "black",
+  },
+  button: {
+    width: 200,
+    marginTop: 50,
   },
 });
